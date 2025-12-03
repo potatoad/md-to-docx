@@ -675,6 +675,7 @@ export async function parseToDocxOptions(
                   children: [
                     new TextRun({
                       children: [PageNumber.CURRENT],
+                      font: style?.font || "Aptos",
                     }),
                   ],
                 }),
@@ -855,3 +856,4 @@ export function downloadDocx(
     )
   }
 }
+
