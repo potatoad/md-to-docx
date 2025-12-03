@@ -166,6 +166,7 @@ function processFormattedTextForHeading(
             color: "000000",
             size: fontSize,
             rightToLeft: style?.direction === "RTL",
+            font: style?.font || "Aptos",
           })
         );
         currentText = "";
@@ -198,6 +199,7 @@ function processFormattedTextForHeading(
             color: "000000",
             size: fontSize,
             rightToLeft: style?.direction === "RTL",
+            font: style?.font || "Aptos",
           })
         );
         currentText = "";
@@ -244,6 +246,7 @@ function processFormattedTextForHeading(
           color: "000000",
           size: fontSize,
           rightToLeft: style?.direction === "RTL",
+          font: style?.font || "Aptos",
         })
       );
     }
@@ -257,6 +260,7 @@ function processFormattedTextForHeading(
         color: "000000",
         size: fontSize,
         bold: true, // Headings are bold by default
+        font: style?.font || "Aptos",
       })
     );
   }
@@ -291,6 +295,7 @@ export function processTable(
                       text: header,
                       bold: true,
                       color: "000000",
+                      font: "Aptos",
                     }),
                   ],
                 }),
@@ -314,6 +319,7 @@ export function processTable(
                           text: cell,
                           color: "000000",
                           rightToLeft: false,
+                          font: "Aptos",
                         }),
                       ],
                     }),
@@ -354,12 +360,14 @@ export function processListItem(
       new TextRun({
         text: "\n",
         size: style.listItemSize || 24,
+        font: style?.font || "Aptos",
       }),
       new TextRun({
         text: config.boldText,
         bold: true,
         color: "000000",
         size: style.listItemSize || 24,
+        font: style?.font || "Aptos",
       })
     );
   }
@@ -433,6 +441,7 @@ export function processBlockquote(text: string, style: Style): Paragraph {
         color: "000000",
         size: style.blockquoteSize || 24, // Use custom blockquote size if provided
         rightToLeft: style.direction === "RTL",
+        font: style?.font || "Aptos",
       }),
     ],
     indent: {
@@ -467,6 +476,7 @@ export function processComment(text: string, style: Style): Paragraph {
         text: "Comment: " + text,
         italics: true,
         color: "666666",
+        font: style?.font || "Aptos",
       }),
     ],
     spacing: {
@@ -550,6 +560,7 @@ export function processFormattedText(line: string, style?: Style): (TextRun | Ex
               color: "000000",
               size: style?.paragraphSize || 24,
               rightToLeft: style?.direction === "RTL",
+              font: style?.font || "Aptos",
             })
           );
           currentText = "";
@@ -571,6 +582,7 @@ export function processFormattedText(line: string, style?: Style): (TextRun | Ex
                 italics: isItalic,
                 size: style?.paragraphSize || 24,
                 rightToLeft: style?.direction === "RTL",
+                font: style?.font || "Aptos",
               }),
             ],
             link: linkUrl,
@@ -595,6 +607,7 @@ export function processFormattedText(line: string, style?: Style): (TextRun | Ex
             color: "000000",
             size: style?.paragraphSize || 24,
             rightToLeft: style?.direction === "RTL",
+            font: style?.font || "Aptos",
           })
         );
         currentText = "";
@@ -631,6 +644,7 @@ export function processFormattedText(line: string, style?: Style): (TextRun | Ex
             color: "000000",
             size: style?.paragraphSize || 24,
             rightToLeft: style?.direction === "RTL",
+            font: style?.font || "Aptos",
           })
         );
         currentText = "";
@@ -662,6 +676,7 @@ export function processFormattedText(line: string, style?: Style): (TextRun | Ex
             italics: isItalic,
             color: "000000",
             size: style?.paragraphSize || 24,
+            font: style?.font || "Aptos",
           })
         );
         currentText = "";
@@ -713,6 +728,7 @@ export function processFormattedText(line: string, style?: Style): (TextRun | Ex
           color: "000000",
           size: style?.paragraphSize || 24,
           rightToLeft: style?.direction === "RTL",
+          font: style?.font || "Aptos",
         })
       );
     }
@@ -725,6 +741,7 @@ export function processFormattedText(line: string, style?: Style): (TextRun | Ex
         text: "",
         color: "000000",
         size: style?.paragraphSize || 24,
+        font: style?.font || "Aptos",
       })
     );
   }
@@ -898,6 +915,7 @@ export function processLink(text: string, url: string): TextRun {
     text: text,
     color: "0000FF",
     underline: { type: "single" },
+    font: "Aptos",
   });
 }
 
@@ -920,6 +938,7 @@ export function processLinkParagraph(
         color: "0000FF",
         underline: { type: "single" },
         rightToLeft: style.direction === "RTL",
+        font: "Aptos",
       }),
     ],
     link: url,
@@ -988,6 +1007,7 @@ export function createLinkParagraph(text: string, url: string): Paragraph {
             text: text,
             color: "0000FF",
             underline: { type: "single" },
+            font: "Aptos",
           }),
         ],
         link: url,
@@ -1182,6 +1202,7 @@ export async function processImage(
             text: `[Image could not be displayed: ${altText}]`,
             italics: true,
             color: "FF0000",
+            font: "Aptos",
           }),
         ],
         alignment: AlignmentType.CENTER,

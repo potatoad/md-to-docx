@@ -12,9 +12,9 @@ import {
   PageNumber,
   LevelFormat,
   IPropertiesOptions,
-} from "docx";
-import saveAs from "file-saver";
-import { Options, Style, headingConfigs } from "./types.js";
+} from "docx"
+import saveAs from "file-saver"
+import { Options, Style, headingConfigs } from "./types.js"
 import {
   processHeading,
   processTable,
@@ -28,23 +28,24 @@ import {
   processLinkParagraph,
   processImage,
   processParagraph,
-} from "./helpers.js";
+} from "./helpers.js"
 
 const defaultStyle: Style = {
+  font: "Aptos",
   titleSize: 32,
   headingSpacing: 240,
   paragraphSpacing: 240,
   lineSpacing: 1.15,
   paragraphAlignment: "LEFT",
   direction: "LTR",
-};
+}
 
 const defaultOptions: Options = {
   documentType: "document",
   style: defaultStyle,
-};
+}
 
-export { Options, TableData } from "./types.js";
+export { Options, TableData } from "./types.js"
 
 /**
  * Custom error class for markdown conversion errors
@@ -54,8 +55,8 @@ export { Options, TableData } from "./types.js";
  */
 export class MarkdownConversionError extends Error {
   constructor(message: string, public context?: any) {
-    super(message);
-    this.name = "MarkdownConversionError";
+    super(message)
+    this.name = "MarkdownConversionError"
   }
 }
 
@@ -67,35 +68,35 @@ function validateInput(markdown: string, options: Options): void {
   if (!markdown || typeof markdown !== "string") {
     throw new MarkdownConversionError(
       "Invalid markdown input: Markdown must be a non-empty string"
-    );
+    )
   }
 
   if (options.style) {
     const { titleSize, headingSpacing, paragraphSpacing, lineSpacing } =
-      options.style;
+      options.style
     if (titleSize && (titleSize < 8 || titleSize > 72)) {
       throw new MarkdownConversionError(
         "Invalid title size: Must be between 8 and 72 points",
         { titleSize }
-      );
+      )
     }
     if (headingSpacing && (headingSpacing < 0 || headingSpacing > 720)) {
       throw new MarkdownConversionError(
         "Invalid heading spacing: Must be between 0 and 720 twips",
         { headingSpacing }
-      );
+      )
     }
     if (paragraphSpacing && (paragraphSpacing < 0 || paragraphSpacing > 720)) {
       throw new MarkdownConversionError(
         "Invalid paragraph spacing: Must be between 0 and 720 twips",
         { paragraphSpacing }
-      );
+      )
     }
     if (lineSpacing && (lineSpacing < 1 || lineSpacing > 3)) {
       throw new MarkdownConversionError(
         "Invalid line spacing: Must be between 1 and 3",
         { lineSpacing }
-      );
+      )
     }
   }
 }
@@ -107,25 +108,24 @@ function validateInput(markdown: string, options: Options): void {
  * @returns A Promise that resolves to a Blob containing the Docx file
  * @throws {MarkdownConversionError} If conversion fails
  */
-export async function convertMarkdownToDocx( markdown: string, options: Options = defaultOptions): Promise<Blob>  {
+export async function convertMarkdownToDocx(markdown: string, options: Options = defaultOptions): Promise<Blob> {
   try {
-    
-    const docxOptions = await parseToDocxOptions(markdown, options);
-    // Create the document with appropriate settings
-    const doc = new Document(docxOptions);
 
-    return await Packer.toBlob(doc);
+    const docxOptions = await parseToDocxOptions(markdown, options)
+    // Create the document with appropriate settings
+    const doc = new Document(docxOptions)
+
+    return await Packer.toBlob(doc)
 
   } catch (error) {
     if (error instanceof MarkdownConversionError) {
-      throw error;
+      throw error
     }
     throw new MarkdownConversionError(
-      `Failed to convert markdown to docx: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `Failed to convert markdown to docx: ${error instanceof Error ? error.message : "Unknown error"
       }`,
       { originalError: error }
-    );
+    )
   }
 }
 /**
@@ -135,180 +135,179 @@ export async function convertMarkdownToDocx( markdown: string, options: Options 
  * @returns A Promise that resolves to a Blob containing the Docx file
  * @throws {MarkdownConversionError} If conversion fails
  */
-export async function parseToDocxOptions (
+export async function parseToDocxOptions(
   markdown: string,
   options: Options = defaultOptions
 ): Promise<IPropertiesOptions> {
   try {
 
     // Validate inputs early
-    validateInput(markdown, options);
+    validateInput(markdown, options)
 
-    const { style = defaultStyle, documentType = "document" } = options;
-    const docChildren: (Paragraph | Table)[] = [];
-    const headings: { text: string; level: number; bookmarkId: string }[] = [];
-    const lines = markdown.split("\n");
-    let inList = false;
-    let listItems: Paragraph[] = [];
-    let currentListNumber = 1;
-    let isCurrentListNumbered = false;
-    let numberedListSequenceId = 0;
-    let inCodeBlock = false;
-    let codeBlockContent = "";
-    let codeBlockLanguage: string | undefined;
-    let tableIndex = 0;
-    const tables = collectTables(lines);
+    const { style = defaultStyle, documentType = "document" } = options
+    const docChildren: (Paragraph | Table)[] = []
+    const headings: { text: string; level: number; bookmarkId: string }[] = []
+    const lines = markdown.split("\n")
+    let inList = false
+    let listItems: Paragraph[] = []
+    let currentListNumber = 1
+    let isCurrentListNumbered = false
+    let numberedListSequenceId = 0
+    let inCodeBlock = false
+    let codeBlockContent = ""
+    let codeBlockLanguage: string | undefined
+    let tableIndex = 0
+    const tables = collectTables(lines)
 
     for (let i = 0; i < lines.length; i++) {
       try {
-        const line = lines[i];
-        const trimmedLine = line.trim();
+        const line = lines[i]
+        const trimmedLine = line.trim()
 
         // Skip empty lines
         if (!trimmedLine) {
           if (inCodeBlock) {
-            codeBlockContent += "\n";
+            codeBlockContent += "\n"
           }
           if (inList) {
-            docChildren.push(...listItems);
-            listItems = [];
-            inList = false;
-            currentListNumber = 1;
-            isCurrentListNumbered = false;
+            docChildren.push(...listItems)
+            listItems = []
+            inList = false
+            currentListNumber = 1
+            isCurrentListNumbered = false
           }
-          docChildren.push(new Paragraph({}));
-          continue;
+          docChildren.push(new Paragraph({}))
+          continue
         }
 
         // Handle Page Break
         if (trimmedLine === "\\pagebreak") {
           if (inList) {
-            docChildren.push(...listItems);
-            listItems = [];
-            inList = false;
-            currentListNumber = 1;
-            isCurrentListNumbered = false;
+            docChildren.push(...listItems)
+            listItems = []
+            inList = false
+            currentListNumber = 1
+            isCurrentListNumbered = false
           }
-          docChildren.push(new Paragraph({ children: [new PageBreak()] }));
-          continue;
+          docChildren.push(new Paragraph({ children: [new PageBreak()] }))
+          continue
         }
 
         // Handle Markdown Separators (e.g., ---)
         if (/^\s*---\s*$/.test(trimmedLine)) {
           if (inList) {
-            docChildren.push(...listItems);
-            listItems = [];
-            inList = false;
-            currentListNumber = 1;
-            isCurrentListNumbered = false;
+            docChildren.push(...listItems)
+            listItems = []
+            inList = false
+            currentListNumber = 1
+            isCurrentListNumbered = false
           }
           // Skip the separator line
-          continue;
+          continue
         }
 
         // Handle TOC Placeholder
         if (trimmedLine === "[TOC]") {
           if (inList) {
-            docChildren.push(...listItems);
-            listItems = [];
-            inList = false;
+            docChildren.push(...listItems)
+            listItems = []
+            inList = false
           }
           // Create a paragraph and add a unique property to identify it later
           const tocPlaceholder = new Paragraph({});
-          (tocPlaceholder as any).__isTocPlaceholder = true; // Add temporary marker property
-          docChildren.push(tocPlaceholder);
-          continue;
+          (tocPlaceholder as any).__isTocPlaceholder = true // Add temporary marker property
+          docChildren.push(tocPlaceholder)
+          continue
         }
 
         // Handle code blocks
         if (trimmedLine.startsWith("```")) {
           if (!inCodeBlock) {
             // Start of code block
-            inCodeBlock = true;
-            codeBlockLanguage = trimmedLine.slice(3).trim() || undefined;
-            codeBlockContent = "";
+            inCodeBlock = true
+            codeBlockLanguage = trimmedLine.slice(3).trim() || undefined
+            codeBlockContent = ""
           } else {
             // End of code block
-            inCodeBlock = false;
+            inCodeBlock = false
             docChildren.push(
               processCodeBlock(
                 codeBlockContent.trim(),
                 codeBlockLanguage,
                 style
               )
-            );
-            codeBlockContent = "";
-            codeBlockLanguage = undefined;
+            )
+            codeBlockContent = ""
+            codeBlockLanguage = undefined
           }
-          continue;
+          continue
         }
 
         if (inCodeBlock) {
-          codeBlockContent += (codeBlockContent ? "\n" : "") + line;
-          continue;
+          codeBlockContent += (codeBlockContent ? "\n" : "") + line
+          continue
         }
 
         // Process headings
         if (trimmedLine.startsWith("#")) {
-          const match = trimmedLine.match(/^#+/);
+          const match = trimmedLine.match(/^#+/)
           if (match) {
-            const level = match[0].length;
+            const level = match[0].length
             if (level >= 1 && level <= 5) {
               if (inList) {
-                docChildren.push(...listItems);
-                listItems = [];
-                inList = false;
+                docChildren.push(...listItems)
+                listItems = []
+                inList = false
               }
-              const headingText = trimmedLine.substring(level).trim();
+              const headingText = trimmedLine.substring(level).trim()
               const config = {
                 ...headingConfigs[level],
                 alignment:
                   headingConfigs[level].alignment || style.headingAlignment,
-              };
+              }
               const { paragraph: headingParagraph, bookmarkId } =
-                processHeading(trimmedLine, config, style, documentType);
-              headings.push({ text: headingText, level, bookmarkId });
+                processHeading(trimmedLine, config, style, documentType)
+              headings.push({ text: headingText, level, bookmarkId })
 
-              docChildren.push(headingParagraph);
-              continue;
+              docChildren.push(headingParagraph)
+              continue
             }
             // Graceful degradation for unsupported heading levels
             console.warn(
               `Warning: Heading level ${level} is not supported. Converting to regular paragraph.`
-            );
+            )
           }
         }
 
         // Handle tables
         if (trimmedLine.startsWith("|") && trimmedLine.endsWith("|")) {
           // Support standard and aligned separator rows (with optional leading/trailing colons)
-          const separatorRegex = /^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/;
+          const separatorRegex = /^\s*\|(?:\s*:?-+:?\s*\|)+\s*$/
           if (
             i + 1 < lines.length &&
             (separatorRegex.test(lines[i + 1]) ||
               (i + 2 < lines.length && separatorRegex.test(lines[i + 2])))
           ) {
             if (inList) {
-              docChildren.push(...listItems);
-              listItems = [];
-              inList = false;
+              docChildren.push(...listItems)
+              listItems = []
+              inList = false
             }
 
             if (tableIndex < tables.length) {
               try {
                 docChildren.push(
                   processTable(tables[tableIndex], documentType)
-                );
-                const tableRowCount = 2 + tables[tableIndex].rows.length;
-                i += tableRowCount - 1;
-                tableIndex++;
-                continue;
+                )
+                const tableRowCount = 2 + tables[tableIndex].rows.length
+                i += tableRowCount - 1
+                tableIndex++
+                continue
               } catch (error) {
                 console.warn(
-                  `Warning: Failed to process table at line ${
-                    i + 1
+                  `Warning: Failed to process table at line ${i + 1
                   }. Converting to regular text.`
-                );
+                )
                 // Fallback to regular text
                 docChildren.push(
                   new Paragraph({
@@ -316,12 +315,13 @@ export async function parseToDocxOptions (
                       new TextRun({
                         text: trimmedLine.replace(/\|/g, "").trim(),
                         color: "000000",
+                        font: style?.font || "Aptos",
                       }),
                     ],
                     bidirectional: style.direction === "RTL",
                   })
-                );
-                continue;
+                )
+                continue
               }
             }
           }
@@ -331,26 +331,26 @@ export async function parseToDocxOptions (
         if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* ")) {
           // Reset if switching from numbered to bullet list
           if (isCurrentListNumbered) {
-            currentListNumber = 1;
-            isCurrentListNumbered = false;
+            currentListNumber = 1
+            isCurrentListNumbered = false
           }
 
-          inList = true;
-          const listText = trimmedLine.replace(/^[-*]\s+/, "").trim();
+          inList = true
+          const listText = trimmedLine.replace(/^[-*]\s+/, "").trim()
 
           // Check if there's a bold section on the next line
-          let boldText = "";
+          let boldText = ""
           if (
             i + 1 < lines.length &&
             lines[i + 1].trim().startsWith("**") &&
             lines[i + 1].trim().endsWith("**")
           ) {
-            boldText = lines[i + 1].trim().slice(2, -2); // Remove ** markers
-            i++;
+            boldText = lines[i + 1].trim().slice(2, -2) // Remove ** markers
+            i++
           }
 
-          listItems.push(processListItem({ text: listText, boldText }, style));
-          continue;
+          listItems.push(processListItem({ text: listText, boldText }, style))
+          continue
         }
 
         // Handle numbered lists
@@ -358,23 +358,23 @@ export async function parseToDocxOptions (
           // Check if we need to start a new numbered list sequence
           if (!isCurrentListNumbered || !inList) {
             // Starting a new numbered list sequence
-            numberedListSequenceId++;
-            currentListNumber = 1;
-            isCurrentListNumbered = true;
+            numberedListSequenceId++
+            currentListNumber = 1
+            isCurrentListNumbered = true
           }
 
-          inList = true;
-          const listText = trimmedLine.replace(/^\s*\d+\.\s/, "").trim();
+          inList = true
+          const listText = trimmedLine.replace(/^\s*\d+\.\s/, "").trim()
 
           // Check if there's a bold section on the next line
-          let boldText = "";
+          let boldText = ""
           if (
             i + 1 < lines.length &&
             lines[i + 1].trim().startsWith("**") &&
             lines[i + 1].trim().endsWith("**")
           ) {
-            boldText = lines[i + 1].trim().slice(2, -2); // Remove ** markers
-            i++;
+            boldText = lines[i + 1].trim().slice(2, -2) // Remove ** markers
+            i++
           }
 
           listItems.push(
@@ -388,53 +388,52 @@ export async function parseToDocxOptions (
               },
               style
             )
-          );
-          currentListNumber++;
-          continue;
+          )
+          currentListNumber++
+          continue
         }
 
         // Handle blockquotes
         if (trimmedLine.startsWith("> ")) {
           if (inList) {
-            docChildren.push(...listItems);
-            listItems = [];
-            inList = false;
+            docChildren.push(...listItems)
+            listItems = []
+            inList = false
           }
-          const quoteText = trimmedLine.replace(/^>\s*/, "").trim();
-          docChildren.push(processBlockquote(quoteText, style));
-          continue;
+          const quoteText = trimmedLine.replace(/^>\s*/, "").trim()
+          docChildren.push(processBlockquote(quoteText, style))
+          continue
         }
 
         // Handle comments
         if (trimmedLine.startsWith("COMMENT:")) {
           if (inList) {
-            docChildren.push(...listItems);
-            listItems = [];
-            inList = false;
+            docChildren.push(...listItems)
+            listItems = []
+            inList = false
           }
-          const commentText = trimmedLine.replace(/^COMMENT:\s*/, "").trim();
-          docChildren.push(processComment(commentText, style));
-          continue;
+          const commentText = trimmedLine.replace(/^COMMENT:\s*/, "").trim()
+          docChildren.push(processComment(commentText, style))
+          continue
         }
 
         // Handle images
-        const imageMatch = trimmedLine.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+        const imageMatch = trimmedLine.match(/!\[([^\]]*)\]\(([^)]+)\)/)
         if (imageMatch) {
-          const [_, altText, imageUrl] = imageMatch;
+          const [_, altText, imageUrl] = imageMatch
           // Process images synchronously to ensure they're fully loaded
           try {
             const imageParagraphs = await processImage(
               altText,
               imageUrl,
               style
-            );
-            docChildren.push(...imageParagraphs);
+            )
+            docChildren.push(...imageParagraphs)
           } catch (error) {
             console.error(
-              `Error in image processing: ${
-                error instanceof Error ? error.message : String(error)
+              `Error in image processing: ${error instanceof Error ? error.message : String(error)
               }`
-            );
+            )
             docChildren.push(
               new Paragraph({
                 children: [
@@ -442,35 +441,35 @@ export async function parseToDocxOptions (
                     text: `[Image could not be loaded: ${altText}]`,
                     italics: true,
                     color: "FF0000",
+                    font: style?.font || "Aptos",
                   }),
                 ],
                 alignment: AlignmentType.CENTER,
                 bidirectional: style.direction === "RTL",
               })
-            );
+            )
           }
-          continue;
+          continue
         }
 
         // Handle standalone links (entire line is a single link) - inline links are handled in processParagraph
-        const linkMatch = trimmedLine.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        const linkMatch = trimmedLine.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
         if (linkMatch) {
-          const [_, text, url] = linkMatch;
-          docChildren.push(processLinkParagraph(text, url, style));
-          continue;
+          const [_, text, url] = linkMatch
+          docChildren.push(processLinkParagraph(text, url, style))
+          continue
         }
 
         // Regular paragraph text with special formatting (use trimmedLine for processing)
         if (!inList) {
           try {
-            docChildren.push(processParagraph(trimmedLine, style));
+            docChildren.push(processParagraph(trimmedLine, style))
           } catch (error) {
             // Fallback to plain text if formatting fails
             console.warn(
-              `Warning: Failed to process text formatting at line ${i + 1}: ${
-                error instanceof Error ? error.message : String(error)
+              `Warning: Failed to process text formatting at line ${i + 1}: ${error instanceof Error ? error.message : String(error)
               }. Using plain text.`
-            );
+            )
             docChildren.push(
               new Paragraph({
                 children: [
@@ -478,6 +477,7 @@ export async function parseToDocxOptions (
                     text: trimmedLine,
                     color: "000000",
                     size: style.paragraphSize || 24,
+                    font: style?.font || "Aptos",
                   }),
                 ],
                 spacing: {
@@ -489,9 +489,9 @@ export async function parseToDocxOptions (
                   ? (AlignmentType as any)[style.paragraphAlignment]
                   : undefined,
               })
-            );
+            )
           }
-          continue;
+          continue
         }
 
         // Removed the fallback 'isContinuation' list item processing as it was causing type errors
@@ -499,11 +499,10 @@ export async function parseToDocxOptions (
       } catch (error) {
         // Log error and continue with next line
         console.warn(
-          `Warning: Failed to process line ${i + 1}: ${
-            error instanceof Error ? error.message : "Unknown error"
+          `Warning: Failed to process line ${i + 1}: ${error instanceof Error ? error.message : "Unknown error"
           }. Skipping line.`
-        );
-        continue;
+        )
+        continue
       }
     }
 
@@ -511,16 +510,16 @@ export async function parseToDocxOptions (
     if (inCodeBlock && codeBlockContent) {
       docChildren.push(
         processCodeBlock(codeBlockContent.trim(), codeBlockLanguage, style)
-      );
+      )
     }
 
     // Add any remaining list items
     if (inList && listItems.length > 0) {
-      docChildren.push(...listItems);
+      docChildren.push(...listItems)
     }
 
     // Generate TOC content
-    const tocContent: Paragraph[] = [];
+    const tocContent: Paragraph[] = []
     if (headings.length > 0) {
       // Optional: Add a title for the TOC
       tocContent.push(
@@ -531,55 +530,55 @@ export async function parseToDocxOptions (
           spacing: { after: 240 },
           bidirectional: style.direction === "RTL",
         })
-      );
+      )
       headings.forEach((heading) => {
         // Determine font size based on heading level
-        let fontSize;
-        let isBold = false;
-        let isItalic = false;
+        let fontSize
+        let isBold = false
+        let isItalic = false
 
         // Apply level-specific styles if provided
         switch (heading.level) {
           case 1:
-            fontSize = style.tocHeading1FontSize || style.tocFontSize;
+            fontSize = style.tocHeading1FontSize || style.tocFontSize
             isBold =
               style.tocHeading1Bold !== undefined
                 ? style.tocHeading1Bold
-                : true;
-            isItalic = style.tocHeading1Italic || false;
-            break;
+                : true
+            isItalic = style.tocHeading1Italic || false
+            break
           case 2:
-            fontSize = style.tocHeading2FontSize || style.tocFontSize;
+            fontSize = style.tocHeading2FontSize || style.tocFontSize
             isBold =
               style.tocHeading2Bold !== undefined
                 ? style.tocHeading2Bold
-                : false;
-            isItalic = style.tocHeading2Italic || false;
-            break;
+                : false
+            isItalic = style.tocHeading2Italic || false
+            break
           case 3:
-            fontSize = style.tocHeading3FontSize || style.tocFontSize;
-            isBold = style.tocHeading3Bold || false;
-            isItalic = style.tocHeading3Italic || false;
-            break;
+            fontSize = style.tocHeading3FontSize || style.tocFontSize
+            isBold = style.tocHeading3Bold || false
+            isItalic = style.tocHeading3Italic || false
+            break
           case 4:
-            fontSize = style.tocHeading4FontSize || style.tocFontSize;
-            isBold = style.tocHeading4Bold || false;
-            isItalic = style.tocHeading4Italic || false;
-            break;
+            fontSize = style.tocHeading4FontSize || style.tocFontSize
+            isBold = style.tocHeading4Bold || false
+            isItalic = style.tocHeading4Italic || false
+            break
           case 5:
-            fontSize = style.tocHeading5FontSize || style.tocFontSize;
-            isBold = style.tocHeading5Bold || false;
-            isItalic = style.tocHeading5Italic || false;
-            break;
+            fontSize = style.tocHeading5FontSize || style.tocFontSize
+            isBold = style.tocHeading5Bold || false
+            isItalic = style.tocHeading5Italic || false
+            break
           default:
-            fontSize = style.tocFontSize;
+            fontSize = style.tocFontSize
         }
 
         // Use default calculation if no specific size provided
         if (!fontSize) {
           fontSize = style.paragraphSize
             ? style.paragraphSize - (heading.level - 1) * 2
-            : 24 - (heading.level - 1) * 2;
+            : 24 - (heading.level - 1) * 2
         }
 
         tocContent.push(
@@ -593,6 +592,7 @@ export async function parseToDocxOptions (
                     size: fontSize,
                     bold: isBold,
                     italics: isItalic,
+                    font: style?.font || "Aptos",
                   }),
                 ],
               }),
@@ -602,32 +602,32 @@ export async function parseToDocxOptions (
             spacing: { after: 120 }, // Spacing between TOC items
             bidirectional: style.direction === "RTL",
           })
-        );
-      });
+        )
+      })
     }
 
     // Replace placeholder with TOC content
-    const finalDocChildren: (Paragraph | Table)[] = [];
-    let tocInserted = false;
+    const finalDocChildren: (Paragraph | Table)[] = []
+    let tocInserted = false
     docChildren.forEach((child) => {
       // Check for the marker property instead of inspecting content
       if ((child as any).__isTocPlaceholder === true) {
         if (tocContent.length > 0 && !tocInserted) {
-          finalDocChildren.push(...tocContent);
-          tocInserted = true; // Ensure TOC is inserted only once
+          finalDocChildren.push(...tocContent)
+          tocInserted = true // Ensure TOC is inserted only once
         } else {
           // If no headings were found or TOC already inserted, remove placeholder
           console.warn(
             "TOC placeholder found, but no headings collected or TOC already inserted."
-          );
+          )
         }
       } else {
-        finalDocChildren.push(child);
+        finalDocChildren.push(child)
       }
-    });
+    })
 
     // Create numbering configurations for all numbered list sequences
-    const numberingConfigs = [];
+    const numberingConfigs = []
     for (let i = 1; i <= numberedListSequenceId; i++) {
       numberingConfigs.push({
         reference: `numbered-list-${i}`,
@@ -644,7 +644,7 @@ export async function parseToDocxOptions (
             },
           },
         ],
-      });
+      })
     }
 
     // Create the document with appropriate settings
@@ -809,19 +809,18 @@ export async function parseToDocxOptions (
           },
         ],
       },
-    };
+    }
 
-    return docxOptions;
+    return docxOptions
   } catch (error) {
     if (error instanceof MarkdownConversionError) {
-      throw error;
+      throw error
     }
     throw new MarkdownConversionError(
-      `Failed to convert markdown to docx: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `Failed to convert markdown to docx: ${error instanceof Error ? error.message : "Unknown error"
       }`,
       { originalError: error }
-    );
+    )
   }
 }
 
@@ -838,22 +837,21 @@ export function downloadDocx(
   filename: string = "document.docx"
 ): void {
   if (typeof window === "undefined") {
-    throw new Error("This function can only be used in browser environments");
+    throw new Error("This function can only be used in browser environments")
   }
   if (!(blob instanceof Blob)) {
-    throw new Error("Invalid blob provided");
+    throw new Error("Invalid blob provided")
   }
   if (!filename || typeof filename !== "string") {
-    throw new Error("Invalid filename provided");
+    throw new Error("Invalid filename provided")
   }
   try {
-    saveAs(blob, filename);
+    saveAs(blob, filename)
   } catch (error) {
-    console.error("Failed to save file:", error);
+    console.error("Failed to save file:", error)
     throw new Error(
-      `Failed to save file: ${
-        error instanceof Error ? error.message : "Unknown error"
+      `Failed to save file: ${error instanceof Error ? error.message : "Unknown error"
       }`
-    );
+    )
   }
 }
